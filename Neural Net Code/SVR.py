@@ -4,11 +4,14 @@ from CSVReader import oneHot
 import numpy as np
 from DataStandardization import standardizeData
 import matplotlib.pyplot as plt
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 
-mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=5,
-                           max_iter=300, shuffle=True, random_state=1,
-                           activation='tanh')
+'''
+Use a Support Vector Machine to perform regression on spreads to predict future ones
+'''
 
+svr = SVR(kernel='rbf', C=0.01, gamma=0.1, epsilon = 0.1)
 
 #Function to check accuracy of model
 def accuracyCheck(yHats,y):
@@ -53,36 +56,33 @@ for i in range(534):
 fullX = np.vstack((fullX))
 #print("FullX & shape: ", fullX, fullX.shape)
 
-#split into test/train data
-#train through week 14 then test on 15-21
-xTest = fullX[417:534]
-xTrain = fullX[0:417]
-
-yTest = y[417:534]
-yTrain = y[0:417]
+#Perform Cross Validation
+#split data into test/train
+X_train, X_test, y_train, y_test = train_test_split(fullX, y, test_size=0.2, random_state=0)
 
 #print("yTest: ", yTest)
 print("Done with data transformations.")
 
 #Fit regression
-mlp.fit(xTrain,yTrain)
+svr.fit(X_train,y_train)
 #Predict spreads of test weeks 
-yHat = mlp.predict(xTest)
+yHat = svr.predict(X_test)
 #Round predictions to nearest whole number
 yHatRound = [ int(round(elem)) for elem in yHat ]
 
 print(yHat[:3])
 print(yHatRound[:3])
-print(yTest[:3])
+print(y_test[:3])
 
 #check accuracy
-percentCorrect = accuracyCheck(yHatRound,yTest)
+percentCorrect = accuracyCheck(yHatRound,y_test)
 print(percentCorrect,"%")
 
-#test_x = np.arange(0.0, 1, 0.05).reshape(-1, 1)
-#test_y = mlp.predict(test_x)
-fig = plt.figure()
-ax1 = fig.add_subplot(111)
-ax1.scatter(yHat, yTest, s=1, c='b', marker="s", label='real')
-#ax1.scatter(test_x,test_y, s=10, c='r', marker="o", label='NN Prediction')
+lw=2
+plt.scatter(yHatRound, y_test, color='darkorange', label='data')
+plt.plot(y_test, yHatRound, color='navy', lw=lw, label='RBF model')
+plt.xlabel('data')
+plt.ylabel('target')
+plt.title('Support Vector Regression')
+plt.legend()
 plt.show()
