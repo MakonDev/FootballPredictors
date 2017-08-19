@@ -6,12 +6,12 @@ from DataStandardization import standardizeData
 import matplotlib.pyplot as plt
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 '''
 Use a Support Vector Machine to perform regression on spreads to predict future ones
 '''
-
-svr = SVR(kernel='rbf', C=0.01, gamma=0.1, epsilon = 0.1)
 
 #Function to check accuracy of model
 def accuracyCheck(yHats,y):
@@ -21,13 +21,11 @@ def accuracyCheck(yHats,y):
         return None
     totalObservations = len(yHats)
     for i in range(len(yHats)):
-        if yHats[i] == y[i]:
+        if yHats[i] == y[i] or abs(yHats[i]-y[i])<3:
             numCorrect += 1
     print("Total Correct: ", numCorrect)
     print("Total Observations: ", totalObservations)
     return (numCorrect/totalObservations)*100
-
-
 
 #Data Transformations                 
 X,y,t = retrieveData("WeeklyNFLDataSPREADS.csv")
@@ -58,26 +56,62 @@ fullX = np.vstack((fullX))
 
 #Perform Cross Validation
 #split data into test/train
-X_train, X_test, y_train, y_test = train_test_split(fullX, y, test_size=0.2, random_state=0)
+#X_train, X_test, y_train, y_test = train_test_split(fullX, y, test_size=0.2, random_state=0)
 
 #print("yTest: ", yTest)
 print("Done with data transformations.")
 
-#Fit regression
-svr.fit(X_train,y_train)
-#Predict spreads of test weeks 
-yHat = svr.predict(X_test)
+'''
+Begin search for best SVR model
+'''
+
+print("Begin Support Vector Regression Grid Search of Kernels, C, Gamma & Epsilon parameters")
+#Create pipeline with SVR
+pipeline = Pipeline([('scl', StandardScaler()),
+                    ('svr', SVR())])
+
+param_range = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
+kernel_range = ['rbf','linear']
+param_grid = [{'svr__C': param_range,'svr__gamma': param_range,'svr__epsilon': param_range,'svr__kernel': kernel_range,}]
+gs = GridSearchCV(estimator=pipeline, param_grid=param_grid, scoring='r2', cv=10, verbose=2, error_score='raise', n_jobs=4)
+gs = gs.fit(fullX, y)
+print("Best GridSearch Score: ", gs.best_score_)
+print("Best GridSearchParameters: ", gs.best_params_)
+
+'''
+After finding best model, analyze it
+'''
+
+'''
+#Predict spreads of test weeks based on best performing (using r^2 score) param combination form GS
+yHat = gs.predict(X_test)
 #Round predictions to nearest whole number
 yHatRound = [ int(round(elem)) for elem in yHat ]
-
-print(yHat[:3])
-print(yHatRound[:3])
-print(y_test[:3])
 
 #check accuracy
 percentCorrect = accuracyCheck(yHatRound,y_test)
 print(percentCorrect,"%")
 
+
+#Check for predicted vs test spreads
+splits = []
+i = 0 #counter for index of other array
+for hat in yHatRound:
+    diff = hat-y_test[i]
+    splits.append(diff)
+    i+=1
+    
+print(splits, len(splits)) 
+
+plt.hist(splits)
+plt.title("Spread Differences")
+plt.xlabel("Difference Between Predicted & Actual Spreads")
+plt.ylabel("Frequency")
+
+plt.show()
+
+'''
+'''
 lw=2
 plt.scatter(yHatRound, y_test, color='darkorange', label='data')
 plt.plot(y_test, yHatRound, color='navy', lw=lw, label='RBF model')
@@ -86,3 +120,4 @@ plt.ylabel('target')
 plt.title('Support Vector Regression')
 plt.legend()
 plt.show()
+'''
