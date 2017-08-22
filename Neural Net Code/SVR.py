@@ -100,7 +100,30 @@ gs = gs.fit(fullX, y)
 print("Best GridSearch Score: ", gs.best_score_)
 print("Best GridSearchParameters: ", gs.best_params_)
 
-
+'''
+Best Results for Solver/Activation Combinations:
+LBFGS/Identity: 
+    Best GridSearch Score:  0.531793707804
+    Best GridSearchParameters:  activation: 'identity', alpha: 10.0, hidden_layer_sizes: 25, 
+    learning_rate_init: 0.0001, max_iter: 25, momentum: 0, solver: 'lbfgs'
+LBFGS/Logistic:
+    Best GridSearch Score:  0.520691426155
+    Best GridSearchParameters:  activation: 'logistic', alpha: 1.0, hidden_layer_sizes: 1, 
+    learning_rate_init: 0.0001, max_iter: 300, momentum: 0, solver: 'lbfgs'
+LBFGS/Tanh: 
+    Best GridSearch Score:  0.510929447257
+    Best GridSearchParameters:  activation: 'tanh', alpha: 10.0, hidden_layer_sizes: 1, 
+    learning_rate_init: 0.0001, max_iter: 200, momentum: 0, solver: 'lbfgs'
+LBFGS/Relu: 
+    Best GridSearch Score:  0.528773707873
+    Best GridSearchParameters:  activation: 'relu', alpha: 10.0, hidden_layer_sizes: 1, 
+    learning_rate_init: 0.0001, max_iter: 200, momentum: 0, solver: 'lbfgs'
+Adam/Identity: 
+Adam/Logistic:
+Adam/Tanh:
+Adam/Relu:
+Best Overall Combination of Params:
+'''
 
 
 '''
